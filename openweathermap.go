@@ -101,27 +101,31 @@ func GetWeather(id string) (Weather, error) {
 		Humidity:      owm.Main.Humidity,
 		Pressure:      owm.Main.Pressure,
 		Cloudness:     owm.Clouds.All,
-		CurWeather:    JapaneseWeather(owm.Weather[0].Main),
+		CurWeather:    JapaneseWeather(owm.Weather[0].ID),
 		WindSpeed:     owm.Wind.Speed,
 		WindDirection: WindDirection(owm.Wind.Degree),
 	}, nil
 }
 
-var WeatherMapEnJa = map[string]string{
-	"Clear":  "快晴",
-	"Sunny":  "晴れ",
-	"Cloudy": "曇り",
-	"Shower": "にわか雨",
-	"Rain":   "雨",
-	"Snow":   "雪",
-}
-
-func JapaneseWeather(en string) string {
-	ja, ok := WeatherMapEnJa[en]
-	if !ok {
-		return en
+func JapaneseWeather(id int) string {
+	switch {
+	case 300 > id && id >= 200:
+		return "雷雨"
+	case 400 > id && id >= 300:
+		return "霧雨"
+	case 600 > id && id >= 500:
+		return "雨"
+	case 700 > id && id >= 600:
+		return "雪"
+	case 800 > id && id >= 700:
+		return "霧"
+	case id == 800:
+		return "快晴"
+	case 900 > id && id > 800:
+		return "曇り"
+	default:
+		return "異常気象"
 	}
-	return ja
 }
 
 var Direction = map[int]string{

@@ -16,7 +16,6 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -84,9 +83,7 @@ func GetWeather(id string) (Weather, error) {
 	v.Add("id", id)
 	v.Add("appid", s.OpenWeatherMapKey)
 	v.Add("units", "metric")
-	url := OpenWeatherMapAPI + "?" + v.Encode()
-	log.Println(url)
-	res, err := http.Get(url)
+	res, err := http.Get(OpenWeatherMapAPI + "?" + v.Encode())
 	if err != nil {
 		return Weather{}, err
 	}

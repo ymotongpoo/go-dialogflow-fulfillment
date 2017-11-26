@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -47,13 +48,11 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	case WelcomeIntent:
 		res, err = welcomeIntent(req)
 	}
-
 	if err != nil {
 		log.Println(err)
 	}
 
-	err = EncodeOutput(w, res)
-	if err != nil {
+	if err = EncodeOutput(w, res); err != nil {
 		log.Println(err)
 	}
 }
@@ -90,7 +89,9 @@ func welcomeIntent(r *Request) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	template := `こんにちは。現在の天気をお知らせします。天気は%s、%.1f度です。気圧は%dヘクトパスカル、曇り度数は%dです。湿度は%dパーセントです。風速は秒速%.1fメートル、風光は%sです。`
-	voice := fmt.Sprintf(template, w.CurWeather, w.CurTemp, w.Pressure, w.Cloudness, w.Humidity, w.WindSpeed, w.WindDirection)
+	now := time.Now().Format("15時04分")
+	template := `こんにちは。時刻は%sです。現在の天気は%s、%.1f度です。` +
+		`気圧は%dヘクトパスカル、曇り度数は%dです。湿度は%dパーセントです。風速は秒速%.1fメートル、風光は%sです。`
+	voice := fmt.Sprintf(template, now, w.CurWeather, w.CurTemp, w.Pressure, w.Cloudness, w.Humidity, w.WindSpeed, w.WindDirection)
 	return NewResponse(voice).SetDisplayText(voice), nil
 }

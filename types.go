@@ -25,6 +25,10 @@ type Request struct {
 	OriginalRequest *OriginalRequest `json:"originalRequest"`
 }
 
+func (req *Request) GetIntent() string {
+	return req.Result.Action
+}
+
 type RequestStatus struct {
 	ErrorType string `json:"errorType"`
 	Code      int    `json:"code"`
@@ -115,15 +119,15 @@ type Response struct {
 	FollowupEvent *FollowupEvent `json:"followupEvent"`
 }
 
-type FollowupEvent struct {
-	EventName string                 `json:"name"`
-	Data      map[string]interface{} `json:"data"`
-}
-
 func NewResponse(speech string) *Response {
 	return &Response{
 		Speech: speech,
 	}
+}
+
+type FollowupEvent struct {
+	EventName string                 `json:"name"`
+	Data      map[string]interface{} `json:"data"`
 }
 
 func (res *Response) SetDisplayText(text string) *Response {

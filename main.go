@@ -17,6 +17,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -28,25 +29,68 @@ func main() {
 	http.ListenAndServe("0.0.0.0:8080", nil)
 }
 
+const (
+	WelcomeIntent = "input.welcome"
+)
+
 func mainHandler(w http.ResponseWriter, r *http.Request) {
+	req, err := DecodeInput(r)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	var res *Response
+	intent := req.GetIntent()
+
+	switch intent {
+	case WelcomeIntent:
+		res, err = welcomeIntent(req)
+	}
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = EncodeOutput(w, res)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+// DecodeInput
+func DecodeInput(r *http.Request) (*Request, error) {
 	var req Request
 	var buf bytes.Buffer
 	tee := io.TeeReader(r.Body, &buf)
+	defer r.Body.Close()
 	err := json.NewDecoder(tee).Decode(&req)
 	if err != nil {
-		log.Printf("decode error: %v\n", err)
+		return nil, fmt.Errorf("decode error: %v\n", err)
 		b, err := ioutil.ReadAll(&buf)
 		if err != nil {
-			log.Println("ioutil error: %v\n", err)
+			return nil, fmt.Errorf("ioutil error: %v\n", err)
 		}
 		log.Printf("%s\n", b)
 	}
-	ctx := req.Result.Contexts[0]
-	res := NewResponse("こんにちは").SetDisplayText("こんにちは")
-	res.ContextOut = []*Context{ctx}
+	return &req, nil
+}
+
+func EncodeOutput(w http.ResponseWriter, res *Response) error {
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(res)
+	err := json.NewEncoder(w).Encode(res)
 	if err != nil {
 		log.Printf("encode error: %v\n", err)
 	}
+	return nil
+}
+
+func welcomeIntent(r *Request) (*Response, error) {
+	w, err := GetWeather("1850147")
+	if err != nil {
+		return nil, err
+	}
+	template := `こんにちは。現在の天気をお知らせします。天気は%s、%.1f度です。気圧は%dヘクトパスカル、曇り度数は%dです。湿度は%dパーセントです。風速は秒速%.1fメートル、風光は%sです。`
+	voice := fmt.Sprintf(template, w.CurWeather, w.CurTemp, w.Pressure, w.Cloudness, w.Humidity, w.WindSpeed, w.WindDirection)
+	return NewResponse(voice).SetDisplayText(voice), nil
 }
